@@ -188,7 +188,9 @@ body{margin:0;background:#000;color:#c9c2b6;font-family:NG,system-ui,sans-serif;
 .cap{position:absolute;left:22px;right:22px;top:452px;text-align:center;font-family:EJ,serif;
  font-size:18px;line-height:1.62;color:var(--paper);white-space:pre-line;z-index:3;
  transition:opacity 300ms ease}
-.phone.game .cap{top:312px;font-size:16px}
+/* ⭐⭐ 08-12 — 미션 화면의 자막 자리에 **힌트 한 줄**이 들어오면서 지시문과 겹쳤다 〔사용자〕.
+   개구부 아래(게임일 때 바닥 292px)에 힌트를 붙이고, 지시문은 그 아래로 내린다. */
+.phone.game .cap{top:300px;font-size:15px;line-height:1.55}
 /* #4 제목이 화면 한복판에 떠 있었다 → **개구부 안**에 든다.
    §0 「제목 슬라이드＝글이 개구부 안(그림 없음)」 그대로. 〔08-09 사용자〕 */
 /* ⚠️ 합의된 목업은 `align-items:baseline`이라 글자가 개구부 **위쪽에 붙어** 있었다
@@ -201,7 +203,46 @@ body{margin:0;background:#000;color:#c9c2b6;font-family:NG,system-ui,sans-serif;
 /* ── 게임 (코드 입력) ───────────────────────────────── */
 .gamebox{position:absolute;left:0;right:0;top:340px;bottom:0;z-index:5;display:none;
  flex-direction:column;align-items:center;padding:0 24px}
-.phone.game .gamebox{display:flex}
+.phone.game .gamebox{display:flex;top:356px}
+/* ⭐⭐⭐ 맞혔을 때 — 숫자가 밝아진 채 잠깐 머문다(`HOLD`). **맞힌 줄 알아채는 시간**이다
+   〔08-12 사용자 *"너무 휙 넘어가서 맞춘 건지 아닌지 인지 못할 정도로 넘기지 마"*〕 */
+.gamebox.right .disp{color:#fff3dc;border-bottom-color:rgba(252,236,211,.92);
+ text-shadow:0 0 14px rgba(252,236,211,.5);transition:all 200ms ease}
+.gamebox.right .pad{opacity:.3;transition:opacity 200ms ease}
+
+/* ⭐⭐⭐ 260813 — **수집 완료.** 코드를 맞히면 «작가가 받아 적는 그림»이 잠깐 떴다 사라진다.
+   ⛔이름 미션에는 안 뜬다(거기는 인물 카드가 뜬다). 외형·성격·관계에만. */
+/* ⭐⭐ 팝업 뒤는 완전히 가라앉는다 〔260813 사용자 — *"뒷 배경이 살아 있어서 이상해"*〕.
+   어둠 한 겹 ＋ 흐림. 개구부·자막·키패드가 다 이 아래로 들어간다. */
+/* ⚠️ 260813 — 90%＋9px은 **아예 새 화면처럼** 보였다 〔사용자〕. 뒤가 «같은 화면인 채로»
+   물러나야 한다 → 어둠을 절반으로 낮추고 흐림만 남긴다. */
+.stampbg{position:absolute;inset:0;z-index:11;opacity:0;pointer-events:none;
+ background:rgba(8,7,5,.55);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+.stampbg.on{animation:stampbgin var(--stamp) ease forwards}
+@keyframes stampbgin{
+  0%{opacity:0} 11%{opacity:1} 58%{opacity:1} 100%{opacity:0}
+}
+/* 뜨고 머물다 사라지기까지 걸리는 시간. JS의 `STAMP`와 «같아야» 한다 */
+.stamp,.stampbg{--stamp:1900ms}
+.stamp{position:absolute;left:50%;top:50%;width:210px;z-index:12;
+ transform:translate(-50%,-50%);opacity:0;pointer-events:none;text-align:center}
+.stamp.on{animation:stampin var(--stamp) ease forwards}
+.stamp img{width:100%;display:block;border:1px solid rgba(252,236,211,.3);
+ box-shadow:0 10px 34px rgba(0,0,0,.6)}
+/* ⭐ 을지로 — 필름 «안»의 글씨다(나눔고딕은 지시문·버튼 같은 필름 밖 자리) 〔260813〕 */
+/* ⚠️ 260813 — 글자를 «흐름»에 두면 덩어리 중심이 내려가 **그림이 위로 치우친다**(14px).
+   글자를 띄워서 붙여 **그림 자체가 정중앙**에 오게 한다 〔사용자〕. */
+.stamp .lab{position:absolute;left:-40px;right:-40px;top:100%;margin-top:12px;
+ font-family:EJ,serif;font-size:14px;letter-spacing:.28em;text-indent:.28em;
+ color:var(--paper);text-shadow:0 0 12px rgba(0,0,0,.7)}
+/* ⭐ 260813 — **사라지는 것이 너무 빨랐다** 〔사용자〕. 뜨는 것은 그대로 빠르고,
+   머무는 시간과 «사라지는 시간»을 늘렸다 — 나가는 데만 0.8초 쓴다. */
+@keyframes stampin{
+  0%  {opacity:0;transform:translate(-50%,-50%) scale(.94)}
+  11% {opacity:1;transform:translate(-50%,-50%) scale(1)}
+  58% {opacity:1;transform:translate(-50%,-50%) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1.02)}
+}
 .ask{font-family:NG;font-size:13px;line-height:1.7;color:var(--paper);text-align:center;
  white-space:pre-line;margin-bottom:14px}
 .disp{font-family:EJ,serif;font-size:30px;letter-spacing:.42em;text-indent:.42em;color:var(--paper);

@@ -70,6 +70,11 @@
 
       <!-- 인물 카드 -->
       <div class="card" id="card"></div>
+
+      <!-- ⭐ 수집 완료 — 코드를 맞히면 잠깐 떴다 사라진다 〔260813 사용자〕.
+           ⭐⭐ 뒤는 «완전히» 가라앉는다 — 뒷 배경이 살아 있으면 버그처럼 보인다 〔260813 사용자〕 -->
+      <div class="stampbg" id="stampbg"></div>
+      <div class="stamp" id="stamp"></div>
     </div>
   </div>
 
@@ -84,6 +89,12 @@ const tk=$('#tk'), dip=$('#dip');
 
 /* 🆕 08-11 밀어내기 — 08-06 목업의 값 그대로. W=개구부 폭 */
 const MOVE=1450, GAP=56, W=324;
+/* ⭐⭐ 맞힌 뒤 머무는 시간. **맞았다는 것을 알아챌 틈**이다 〔08-12 사용자〕.
+   ⛔0으로 줄이지 말 것 — 휙 넘어가면 맞힌 줄을 모른다.
+   ⚠️이름을 `HOLD`로 두면 **화면 1 타자기의 `HOLD`와 부딪힌다**(08-12에 실제로 부딪혔다). */
+const RIGHT_HOLD=900;
+/* 수집 완료 팝업이 떴다 사라지기까지. ⚠️CSS `--stamp`와 같은 값 */
+const STAMP=1900;
 let busy=false, shown=false;      // shown = 앞 단계에서 개구부가 켜져 있었나
 function cell(html){const d=document.createElement('div'); d.innerHTML=html; return d;}
 function gapEl(){const d=document.createElement('div'); d.className='blk'; return d;}
@@ -159,15 +170,33 @@ async function titleLoop(mine){
 /* 진행표 — 자막 순서 그대로. 4장 끝(쇤펠트 찾기)과 7장 끝(베렌스 찾기)에 게임이 낀다 */
 const intro = D.자막.filter(s=>s.화면==='2 도입부');
 const ch3   = D.자막.filter(s=>s.화면==='3 원장');
+const ch4   = D.자막.filter(s=>s.화면==='4 원장의 시선');
 const steps=[];
 let last=null;
 intro.forEach(s=>{ if(s.장!==last){steps.push({t:'title',장:s.장,제목:s.제목});last=s.장;}
                    steps.push({t:'sub',s}); });
-steps.push({t:'game',who:'쇤펠트 부인'});
+steps.push({t:'game',who:'쇤펠트 부인', kind:'이름', bg:'D-홀'});
 steps.push({t:'plate'});                                   // 작업판을 펼친다
+
+/* ⭐⭐⭐ 08-12 — **미션마다 슬라이드가 앞선다**(설계 §14). 베렌스 한 사람의 차례가
+   **이름 → 외형 → 성격 → 관계**이고, 나머지 여섯 인물도 이 틀을 그대로 쓴다.
+   ⛔ 종전에는 7장 자막 다섯 줄을 «다 보고» 이름 미션이 왔다 — 이름을 맞히기 «전»에
+      얼굴·성격 이야기가 먼저 나오는 셈이라 차례를 바꿨다 〔08-12 사용자 승인〕. */
+const BEHRENS='호프라트 베렌스';
+const mission=(t)=>D.벽문장.filter(w=>w.화자===D.짧은이름[BEHRENS] && w.종류===t);
 steps.push({t:'title',장:'7',제목:'원장'});
-ch3.forEach(s=>steps.push({t:'sub',s}));
-steps.push({t:'game',who:'호프라트 베렌스'});
+ch3.slice(0,2).forEach(s=>steps.push({t:'sub',s}));            /* 접수 · 복도 */
+steps.push({t:'game',who:BEHRENS, kind:'이름', bg:'F-복도'});
+ch3.slice(2).forEach(s=>steps.push({t:'sub',s}));              /* 다가옴 · 농담 · 가림 */
+/* ⭐ 미션 화면의 그림 = **그 앞 마지막 슬라이드** 〔08-12〕. 아래에 자막 꼴로 힌트 한 줄. */
+const lastOf=a=>a.length?a[a.length-1].슬롯:'';
+mission('외형').forEach(w=>steps.push({t:'game',who:BEHRENS,kind:'외형',w,bg:lastOf(ch3)}));
+mission('성격').forEach(w=>steps.push({t:'game',who:BEHRENS,kind:'성격',w,bg:lastOf(ch3)}));
+if(ch4.length){
+  steps.push({t:'title',장:ch4[0].장,제목:ch4[0].제목});
+  ch4.forEach(s=>steps.push({t:'sub',s}));
+  mission('관계').forEach(w=>steps.push({t:'game',who:BEHRENS,kind:'관계',w,bg:lastOf(ch4)}));
+}
 steps.push({t:'end'});
 
 /* 게임 ①은 4장 마지막 자막 뒤에 와야 한다 — 자리를 옮긴다 */
@@ -189,6 +218,15 @@ function frame(name){
   const src=D.그림[name]||'';
   return src ? `<img src="${src}" alt=""><img class="bloom" src="${src}" alt="" aria-hidden="true">`
              : `<div class="empty"><b>${name||'그림 없음'}</b><span>그림 자리 — 아직 안 받음</span></div>`;
+}
+
+/* 미션 지시문. ⭐문장은 엑셀(화면문구 시트) 그대로고, 여기서는 이름과 조사만 끼운다.
+   화면 4의 셋은 `{인물}{은/는} …` 꼴로 적혀 있다 〔08-12 사용자 확정〕. */
+function ask(st){
+  if(!st.w) return D.문구[st.who==='쇤펠트 부인' ? '화면 2|게임 지시문' : '화면 3|게임 지시문'];
+  const nm=D.짧은이름[st.who], c=nm.charCodeAt(nm.length-1)-0xAC00;
+  const 은는 = (c>=0 && c<11172 && c%28) ? '은' : '는';       /* 받침이 있으면 「은」 */
+  return D.문구[`화면 4|${st.kind} 지시문`].replace('{인물}',nm).replace('{은/는}',은는);
 }
 
 function show(){
@@ -218,12 +256,15 @@ function show(){
   }
   else if(st.t==='game'){
     ph.classList.add('game');
-    ap.style.display=halo.style.display='block'; cap.style.display=halo.style.display='none';
-    const bg = st.who==='쇤펠트 부인' ? 'D-홀' : 'F-복도';
-    paint(frame(bg), push);
-    $('#ask').textContent = D.문구[st.who==='쇤펠트 부인' ? '화면 2|게임 지시문' : '화면 3|게임 지시문'];
+    ap.style.display=halo.style.display='block';
+    /* ⭐ 이름 미션은 힌트가 없다(찾을 것이 얼굴이다). 외형·성격·관계는 **자막 자리에 힌트 한 줄** */
+    cap.style.display = st.w ? 'block' : 'none';
+    paint(frame(st.bg), push, st.w ? st.w.힌트 : undefined);
+    $('#ask').textContent = ask(st);
     $('#disp').textContent=''; $('#msg').textContent='';
-    gb.dataset.who=st.who;
+    gb.dataset.who=st.who; gb.dataset.kind=st.kind;
+    gb.dataset.code = st.w ? st.w.코드 : (D.인물.find(x=>x.이름===st.who)||{}).코드;
+    gb.dataset.item = st.w ? st.w.항목 : '';
   }
   else if(st.t==='plate'){
     /* §6-2-2 ⛔ 여기서는 미션도 조작 안내도 손 쓰기도 없다. 판이 있다는 것만 알린다 */
@@ -234,7 +275,7 @@ function show(){
   }
   else if(st.t==='end'){
     ap.style.display=halo.style.display='block';
-    paint('<div class="titleslide"><span style="font-size:17px">여기까지 — 다음은 화면 4</span></div>', push);
+    paint('<div class="titleslide"><span style="font-size:17px">여기까지 — 다음은 두 번째 인물</span></div>', push);
   }
   shown = ap.style.display==='block';
 }
@@ -259,13 +300,50 @@ pad.onclick=e=>{
 };
 function submit(){
   const who=gb.dataset.who, p=D.인물.find(x=>x.이름===who);
-  if($('#disp').textContent!==p.코드){
+  if($('#disp').textContent!==gb.dataset.code){
     $('#msg').textContent=D.문구['공통|오답']; $('#disp').textContent=''; return;
   }
-  unlocked.add(who);
-  /* ⛔ 08-09의 「쇤펠트와 소위를 함께 채운다」는 폐기됐다 〔08-12 사용자〕.
-        소위는 아래 plate(관계도)에서 채워진다 — 되살리지 말 것. */
-  state.dict=true; setHead(); openCard(p);
+  if(gb.dataset.kind==='이름'){
+    unlocked.add(who);
+    /* ⛔ 08-09의 「쇤펠트와 소위를 함께 채운다」는 폐기됐다 〔08-12 사용자〕.
+          소위는 아래 plate(관계도)에서 채워진다 — 되살리지 말 것. */
+    state.dict=true; setHead();
+    gb.classList.add('right'); $('#msg').textContent='';
+    setTimeout(()=>{ gb.classList.remove('right'); openCard(p); }, RIGHT_HOLD);
+    return;
+  }
+  /* ⭐ 외형·성격·관계 — 맞히면 그 «벽 문장»을 얻는다. 관계는 판의 선이 그어진다(`got`). */
+  const w=D.벽문장.find(x=>x.항목===gb.dataset.item);
+  got.add(w.항목);
+
+  /* ⭐⭐⭐ 08-12 — **맞힌 것을 알아챌 틈을 준다** 〔사용자 *"너무 휙 넘어가서 맞춘 건지
+     아닌지 인지 못할 정도로 넘기지 마"*〕. 입력한 숫자를 «맞았다»는 낯으로 잠깐 세워 두고
+     그다음에 넘긴다. ⛔즉시 넘기지 말 것. */
+  gb.classList.add('right'); $('#msg').textContent='';
+  /* ⭐⭐⭐ 260813 — **연달아 코드를 입력하는 화면에서는 맞힌 것이 안 보였다** 〔사용자〕.
+     외형 다음이 또 코드 화면이라 화면이 안 바뀌어서였다. → **수집 완료 팝업**을 세운다. */
+  setTimeout(()=>{
+    gb.classList.remove('right');
+    stamp(()=>{
+      /* ⛔ 08-12 — 외형·성격은 **초상도 문장도 인물사전도 띄우지 않는다** 〔사용자〕.
+         ⭐ 260813 — 관계도는 **첫 관계를 찾았을 때 한 번만** 펼친다 〔사용자〕.
+            그다음부터는 그냥 다음 문제로 간다. ⛔매번 펼치지 말 것. */
+      const firstRel = w.종류==='관계' &&
+        D.벽문장.filter(x=>x.종류==='관계' && got.has(x.항목)).length===1;
+      if(firstRel){ afterCard=true; openBoard('rel'); return; }
+      next();
+    });
+  }, 420);
+}
+/* 맞혔다는 표 — 작가가 받아 적는 그림 한 장이 떴다 사라진다 〔260813 사용자〕 */
+function stamp(after){
+  const el=$('#stamp'), bg=$('#stampbg');
+  el.innerHTML=`<img src="${D.그림['H-기록']}" alt="">
+    <div class="lab">${D.문구['공통|수집 완료 표시']}</div>`;
+  bg.className='stampbg on'; el.className='stamp on';
+  /* ⚠️ CSS `--stamp`와 «같은 값»이어야 한다 — 어긋나면 다 사라지기 전에 다음 화면이 온다 */
+  setTimeout(()=>{ bg.className='stampbg'; el.className='stamp';
+                   if(after) after(); }, STAMP);
 }
 function openCard(p, again){
   /* 카드는 «천 위»에 뜬다 — 슬라이드도 키패드도 물러난다 〔08-12 사용자〕 */
@@ -287,8 +365,9 @@ function openBoard(kind, opt){
   opt=opt||{};
   opened=true; $('#board').className='board on'; $('#board').dataset.kind=kind;
   $('#btitle').textContent = D.문구[kind==='rel' ? '공통|판 제목 — 관계도' : '공통|판 제목 — 인물사전'];
-  /* §6-2-2 ⛔ 「작업판을 펼친다」에서는 조작을 안내하지 않는다 */
-  $('#bhint').textContent = (kind==='rel' && !opt.sample) ? D.문구['관계 원형|조작 안내'] : '';
+  /* ⭐ 08-12 — 관계도를 펼치면 조작 안내가 **늘** 뜬다 〔사용자 *"이 문장이 관계도를
+     펼치면 항상 나와야 해"*〕. ⛔종전에는 「작업판을 펼친다」(sample)에서 숨겼다. */
+  $('#bhint').textContent = kind==='rel' ? D.문구['관계 원형|조작 안내'] : '';
   const vp=$('#vp'); closeQuote();
   const full=s=>Object.keys(D.짧은이름).find(f=>D.짧은이름[f]===s);
 
@@ -415,13 +494,19 @@ function wireEdges(sc, rel){
   };
   sc.querySelectorAll('.face').forEach(c=>{ if(c.classList.contains('faint')) return;
     c.onclick=()=>{ closeQuote(); picked=(picked===c.dataset.nm)?null:c.dataset.nm; paint(); }; });
-  hits.forEach(el=>el.onclick=()=>{ openQuote(rel[+el.dataset.i]); paint(); });
+  /* 🐛 08-12 — **아직 못 찾은 선(점선)을 눌러도 문장이 보였다** 〔사용자〕.
+     찾은 것(실선)만 열린다. 「그 밖의 관계」는 코드 없이 채워지므로 늘 열린다. */
+  hits.forEach(el=>el.onclick=()=>{ const w=rel[+el.dataset.i];
+    if(!(got.has(w.항목) || w.종류==='그 밖의 관계')) return;
+    openQuote(w); paint(); });
   paint();
 }
 function openQuote(w){
+  /* ⭐ 08-12 — 벽 문장을 통째로 띄우면 판에서 읽기 부담스럽다 〔사용자〕.
+     **짧은 요약**을 띄운다. 「그 밖의 관계」는 원래 문장이 짧아 그대로 쓴다(요약이 비어 있다). */
   const q=$('#quote'); q.className='quote on';
   q.innerHTML=`<button class="x" id="qx">×</button>
-    <div class="who">${w.화자} → ${w.대상}</div><div class="txt">${w.문장}</div>`;
+    <div class="who">${w.화자} → ${w.대상}</div><div class="txt">${w.요약||w.문장}</div>`;
   $('#qx').onclick=closeQuote;
 }
 function closeQuote(){ $('#quote').className='quote'; }
