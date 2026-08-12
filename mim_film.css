@@ -1,0 +1,341 @@
+/* ⭐⭐⭐ 08-10 3차 — **어둠으로 되돌리고, 대신 경계를 지운다** 〔사용자 제공 자료로 판정〕
+   ⛔1차(v3 통째로 밝게)·2차(v4 벽만 희게) **둘 다 폐기.** 되살리지 말 것.
+   근거 = 사용자가 준 19세기 매직 랜턴 그림(부산일보 2019-04-02) —
+   **방은 어둡고, 흰 것은 벽이 아니라 늘어뜨린 천이며, 그 천도 빛의 원 밖에서는 어둡다.**
+   ⭐⭐ 그러니 문제는 **밝기가 아니라 경계였다.** v2의 개구부는 모서리 14px 사각형이라
+   빛이 칼로 자른 듯 끊겼다. 고칠 것은 색이 아니라 **가장자리·번짐·천**이다(§질감 넷). */
+:root{--ink:#0d0b07;--paper:#fcecd3;--mount:#17140f;--line:rgba(252,236,211,.22);--blur:4.6px}
+*{box-sizing:border-box}
+body{margin:0;background:#000;color:#c9c2b6;font-family:NG,system-ui,sans-serif;
+ -webkit-font-smoothing:antialiased;overflow:hidden}
+.fit{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+
+/* ── 폰 ─────────────────────────────────────────────── */
+.phone{width:360px;height:760px;background:#000;position:relative;
+ overflow:hidden;user-select:none;flex:0 0 auto;--head:76px}
+
+/* ── 환등기 질감 (한 곳에만 둔다) ──────────────────────── */
+.slide{position:absolute;inset:0;background:#0f0b07;overflow:hidden}
+/* 투사면 — 화면 전체가 천이고 그 위에 쏘인다. ⛔움직이지 않는다(정지 이미지) */
+.bed{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+/* 🆕 상시 떨림 — 틀 전체가 아주 느리게 어긋난다 */
+/* ⚠️ 손가락을 막으면 안 된다 — 질감 층은 클릭을 통과시킨다 〔08-09 버그〕 */
+.weave{position:absolute;inset:0;pointer-events:none;animation:weave 7.3s ease-in-out infinite}
+@keyframes weave{0%{transform:translate(0,0)}17%{transform:translate(.5px,-.6px)}
+ 34%{transform:translate(-.4px,.5px)}51%{transform:translate(.6px,.3px)}
+ 68%{transform:translate(-.5px,-.4px)}85%{transform:translate(.3px,.5px)}
+ 100%{transform:translate(0,0)}}
+/* ⭐ 램프·먼지는 **개구부 안에만** 든다(§HTML: 안쪽 weave). 어두운 바탕이 돌아왔으므로
+   v2의 screen 값을 그대로 되돌린다. ⛔밝은 바탕용으로 고쳤던 값을 남기면 안 보인다. */
+.backlit{position:absolute;inset:0;pointer-events:none;background:#ffeac4;opacity:.07;
+ mix-blend-mode:screen}
+.glow{position:absolute;inset:-14%;pointer-events:none;mix-blend-mode:screen;opacity:.22;
+ background:radial-gradient(58% 62% at 50% 46%,#fff3dc 0%,rgba(255,238,205,.42) 42%,
+ rgba(0,0,0,0) 72%);animation:breathe 17s ease-in-out infinite}
+/* ⚠️ 이 `.vig`는 **바깥(방)** 것이다. 개구부 안쪽 것은 아래 `.ivig`가 따로 덮어쓴다. */
+.vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(118% 98% at 50% 45%,
+ rgba(0,0,0,0) 38%,rgba(0,0,0,.30) 72%,rgba(0,0,0,.62) 100%)}
+
+/* ⛔⛔ 「천의 주름」(`.cloth`)은 **폐기했다** 〔08-10 사용자 *"천의 주름은 별로야 어색하네"*〕.
+   ⭐ 되살리지 말 것. 참고 그림에 주름이 있다는 사실이 근거가 못 된다 —
+      **통과한 것은 빛을 흉내 낸 것**(경계 녹이기·후광)이고 **반려된 것은 표면을 흉내 낸 것**이다.
+      표면 질감을 더 얹고 싶어지면 이 줄을 먼저 읽는다. */
+.dust{position:absolute;left:-50%;top:-50%;width:200%;height:200%;pointer-events:none;
+ background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='160' height='160' filter='url(%23n)' opacity='.5'/></svg>");
+/* 먼지 — 개구부 **안**에만 있다. 어두운 바탕이라 v2대로 밝게 빛난다(screen). */
+ mix-blend-mode:screen}
+.d1{opacity:.14;animation:dr1 34s linear infinite}
+.d2{opacity:.10;transform:scale(1.7);animation:dr2 53s linear infinite}
+/* ⛔⛔ 사선 빗금(`.scr`·`@keyframes jit`)은 **폐기했다** 〔08-10 사용자 *"사선 빗금은 없애자"*〕.
+   ⭐ 되살리지 말 것. 여기서 빠진 것은 **빗금과 그 계단식 흔들림 둘 다**다.
+   ⚠️ 08-10 하루 안에 「남긴다」로 한 번 뒤집혔다가 다시 없애기로 정해졌다 — **이 줄이 마지막이다.** */
+@keyframes breathe{0%,100%{opacity:.185}50%{opacity:.255}}
+@keyframes dr1{to{transform:translate3d(6%,4%,0)}}
+@keyframes dr2{to{transform:scale(1.7) translate3d(-5%,3%,0)}}
+
+/* ── 헤드 76px ──────────────────────────────────────── */
+/* #6 가운데는 어정쩡하다 → 오른쪽으로 붙인다 〔08-09 사용자〕 */
+.head{position:absolute;left:0;right:0;top:0;height:var(--head);display:flex;
+ align-items:center;justify-content:flex-end;gap:8px;padding-right:16px;z-index:6}
+.hbtn{font-family:NG;font-size:12px;letter-spacing:.06em;color:var(--paper);background:transparent;
+ border:2px solid rgba(252,236,211,.45);border-radius:2px;padding:7px 14px;cursor:pointer}
+.hbtn:active{transform:scale(.97)}
+.hbtn[disabled]{opacity:.22;cursor:default}
+/* 판을 닫을 때 이 버튼이 한 번 반짝인다 — «처음 한 번»뿐 〔08-12 사용자〕 */
+@keyframes hblink{0%,100%{border-color:rgba(252,236,211,.45);box-shadow:none}
+ 45%{border-color:rgba(252,236,211,.95);
+     box-shadow:0 0 0 2px rgba(252,236,211,.16), 0 0 18px rgba(252,236,211,.40)}}
+.hbtn.blink{animation:hblink 780ms ease-in-out}
+/* 🐛 판(z-index 8)이 안내문(6)을 덮고 있었다 — 위로 올린다 〔08-09 사용자〕 */
+.guide{position:absolute;left:0;right:0;top:var(--head);text-align:center;font-family:NG;
+ font-size:11px;color:rgba(252,236,211,.62);letter-spacing:.02em;z-index:10;padding:0 16px;
+ line-height:1.6}
+
+/* ── 화면 1 ─────────────────────────────────────────── */
+.stage{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+ justify-content:center;padding:0 22px}
+/* ── 화면 1 슬라이드 마운트 — 화면 1 목업(v16)에서 그대로 옮겨 왔다 〔08-11〕 ──
+   ⛔검은 사각형을 «얹지» 않는다. 마운트는 물건이 아니라 **빛이 막힌 자리**라
+     어둠이 천에 스며야 한다(08-10 「문제는 밝기가 아니라 경계였다」의 한 겹 밖 판).
+   ⚠️`.veil`은 인물카드 뒤 어둠이 이미 쓰고 있어 여기서는 **`.mveil`**로 가른다. */
+.mount{position:relative;width:336px;height:297px;padding:10px}
+.mveil{position:absolute;inset:-26px;z-index:0;pointer-events:none;background:rgba(7,5,3,.86);
+ -webkit-mask-image:radial-gradient(farthest-side ellipse at 50% 50%,
+  #000 0 56%,rgba(0,0,0,.60) 82%,rgba(0,0,0,0) 100%);
+ mask-image:radial-gradient(farthest-side ellipse at 50% 50%,
+  #000 0 56%,rgba(0,0,0,.60) 82%,rgba(0,0,0,0) 100%)}
+.mhalo{position:absolute;z-index:2;left:-30px;right:-30px;top:-22px;height:273px;pointer-events:none;
+ background:radial-gradient(ellipse 46% 58% at 50% 50%,rgba(255,236,198,.20) 0%,
+ rgba(255,232,190,.07) 44%,rgba(255,230,185,0) 76%)}
+.mask{position:relative;z-index:3;width:100%;height:100%;padding:14px 22px 10px}
+.aper{position:relative;width:272px;height:181px;overflow:hidden;
+ -webkit-mask-image:radial-gradient(farthest-corner ellipse at 50% 48%,
+  #000 0 58%,rgba(0,0,0,.66) 82%,rgba(0,0,0,0) 100%);
+ mask-image:radial-gradient(farthest-corner ellipse at 50% 48%,
+  #000 0 58%,rgba(0,0,0,.66) 82%,rgba(0,0,0,0) 100%)}
+.aper img{width:100%;height:100%;object-fit:cover;display:block}
+.aper img.bloom{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
+ filter:blur(7px) brightness(1.45) contrast(1.55);opacity:.42}
+/* 라벨 = 제목을 친 종이 한 조각. ⛔개구부보다 밝으면 안 되므로 눌러서 쓴다 */
+.label{position:relative;width:272px;height:34px;margin-top:12px;overflow:hidden;
+ background:linear-gradient(178deg,#948976 0%,#867c6a 100%);
+ box-shadow:0 1px 0 rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.28),
+  inset 0 0 0 1px rgba(0,0,0,.16), inset 0 7px 11px -9px rgba(0,0,0,.62)}
+.label::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.11;
+ mix-blend-mode:multiply;
+ background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='90' height='90'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='90' height='90' filter='url(%23p)'/></svg>")}
+/* ⛔flex 금지 — ` in the Mountain`의 앞 공백이 잘려 `Manin`이 된다 */
+.ttl{position:absolute;left:8px;right:8px;top:2px;height:34px;line-height:34px;text-align:center;
+ font-family:SE,serif;font-size:17px;letter-spacing:.005em;white-space:nowrap;
+ color:#221b12;text-shadow:0 .5px 0 rgba(255,246,224,.14)}
+/* 부제 = 라벨 아래·어둠 «위». 제목은 잉크, 부제는 미색 글자 */
+.subin{margin-top:12px;height:14px;line-height:14px;text-align:center;font-family:EJ,serif;
+ font-size:13px;letter-spacing:.11em;text-indent:.11em;
+ color:rgba(238,224,197,.62);text-shadow:0 1px 4px rgba(0,0,0,.85)}
+/* ⭐치는 것도 지우는 것도 «시간이 0»이다. ⛔되감기·디졸브·줄흔들림 폐기 */
+.ins{display:inline-block;width:0;opacity:0;overflow:hidden;vertical-align:bottom;
+ line-height:inherit}
+.ins.on{width:var(--nw);opacity:1}
+.ins.wet{animation:wet 280ms ease-out}
+@keyframes wet{0%{filter:brightness(.55) contrast(1.4)}100%{filter:none}}
+/* 커서 — 높이 12px = 대문자 M의 실제 높이. ⚠️정수로 못 박아야 번지지 않는다 */
+.cur{display:inline-block;width:2px;height:12px;background:#221b12;vertical-align:baseline;
+ animation:blink 1.06s steps(1,end) infinite}
+@keyframes blink{0%,49.9%{opacity:1}50%,100%{opacity:0}}
+.startbtn{margin-top:46px;font-family:EJ,serif;font-size:22px;letter-spacing:.42em;
+ text-indent:.42em;color:var(--paper);background:transparent;border:2px solid rgba(252,236,211,.5);
+ border-radius:2px;padding:13px 30px 12px;cursor:pointer}
+.startbtn:active{transform:scale(.97)}
+/* 가장 긴 자막 = 6-③ 3줄(452px에서 시작해 540px에서 끝난다) — 그 아래에 둔다 */
+.tapnote{position:absolute;left:0;right:0;top:566px;text-align:center;font-family:NG;
+ font-size:11px;color:rgba(252,236,211,.42);letter-spacing:.04em;z-index:6;
+ animation:tapfade 2.6s ease-in-out infinite}
+@keyframes tapfade{0%,100%{opacity:.55}50%{opacity:1}}
+.credit{position:absolute;left:0;right:0;bottom:34px;text-align:center;font-family:NG;
+ font-size:11px;letter-spacing:.10em;color:rgba(252,236,211,.48)}
+
+/* ── 슬라이드 ───────────────────────────────────────── */
+/* 🆕 ① 경계를 녹인다 — **빛은 사각형으로 잘리지 않는다.**
+   ⭐ 원으로 오려내지는 않는다 〔사용자 *"꼭 원형으로 잘라내지 않아도 돼"*〕 —
+      그림 15장이 3:2 사각 구도라 원형 마스크를 씌우면 인물이 잘린다.
+      `farthest-corner ellipse`를 쓰면 **가장자리 가운데는 살짝, 네 모서리는 많이** 녹는다.
+   ⛔ border-radius·box-shadow를 뺐다 — 마스크가 테두리째 먹으므로 둘 다 흔적만 남는다.
+      바깥으로 번지는 빛은 아래 `.halo`가 따로 낸다. */
+.aperture{position:absolute;left:18px;width:324px;height:216px;top:210px;
+ overflow:hidden;background:transparent;transition:top 1450ms cubic-bezier(.35,0,.25,1);z-index:3;
+ -webkit-mask-image:radial-gradient(farthest-corner ellipse at 50% 48%,
+  #000 0 56%,rgba(0,0,0,.62) 80%,rgba(0,0,0,0) 100%);
+ mask-image:radial-gradient(farthest-corner ellipse at 50% 48%,
+  #000 0 56%,rgba(0,0,0,.62) 80%,rgba(0,0,0,0) 100%)}
+
+/* 🆕 ② 바깥으로 번지는 빛 — 개구부보다 크고, 천을 물들인다.
+   ⚠️ **개구부와 같이 움직여야 한다**(게임에 들어가면 개구부가 위로 올라간다).
+      가운데를 맞춘 값이다 — 평소 개구부 중심 318px ／ 게임 때 184px. 개구부 top을 바꾸면 여기도. */
+.halo{position:absolute;left:-46px;right:-46px;height:360px;top:138px;z-index:2;pointer-events:none;
+ transition:top 1450ms cubic-bezier(.35,0,.25,1);
+ background:radial-gradient(ellipse 44% 60% at 50% 50%,rgba(255,236,198,.26) 0%,
+  rgba(255,232,190,.10) 42%,rgba(255,230,185,0) 74%)}
+.phone.game .halo{top:4px}
+.phone.game .aperture{top:var(--head)}
+.apin{position:absolute;inset:0;overflow:hidden}
+/* 🆕 08-11 밀어내기 — **08-06 목업(`260806_…화면2_목업_v1.html`)의 구현을 그대로 옮겼다.**
+   ⛔ 새로 짜지 않았다. 합의된 값은 셋뿐이다 — 1.45초 · 등속(linear) · 띠 56px.
+   ⚠️ 전체 흐름 판을 만들며 이게 통째로 빠져 있었다(그림을 그 자리에서 갈아 끼웠다).
+   ⭐ 한 줄로 [지금][검은 띠][다음]을 붙여 두고 **줄 전체를 민다** — 그래서 띠가 «사이»에 있다. */
+.tk{position:absolute;left:0;top:0;height:100%;display:flex;align-items:stretch;
+ will-change:transform}
+.tk>div{flex:0 0 324px;width:324px;height:100%;position:relative;overflow:hidden}
+.blk{flex:0 0 56px !important;width:56px !important;background:#000}
+/* 셔터 몫 — 미는 동안 한 번 어두워졌다 돌아온다. ⛔번쩍임이 아니다(램프는 늘 켜져 있다) */
+.dip{position:absolute;inset:0;pointer-events:none;background:#000;opacity:0;z-index:4}
+.apin img{width:100%;height:100%;object-fit:cover;display:block}
+/* 🆕 번짐(halation) — 쏜 빛은 밝은 데서 어두운 쪽으로 샌다.
+   ⭐ 같은 그림을 한 벌 더 깔고 흐린 뒤 `screen`으로 겹친다.
+      `brightness·contrast`로 **어두운 값을 0쪽으로 눌러** 두었기 때문에
+      screen이 더하는 것은 사실상 **밝은 부분뿐**이다 — 그래서 전체가 뿌예지지 않는다.
+   ⭐ 비용 = 같은 data URI라 내려받기가 늘지 않고, 디코드한 그림도 브라우저가 되쓴다.
+      정지 상태라 흐림 계산은 그림이 바뀔 때 한 번뿐이다. */
+.apin img.bloom{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
+ filter:blur(7px) brightness(1.45) contrast(1.55);opacity:.42}
+.aperture .weave{position:absolute;inset:0;pointer-events:none}
+/* 개구부 안쪽 비네트 — 어두운 바탕이 돌아왔으니 v2 그대로 */
+.ivig{background:radial-gradient(120% 100% at 50% 45%,rgba(0,0,0,0) 40%,rgba(0,0,0,.22) 74%,
+ rgba(0,0,0,.48) 100%)}
+.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+ justify-content:center;gap:6px;color:rgba(206,182,140,.5);font-family:NG;font-size:11px;
+ letter-spacing:.05em;border:1px dashed rgba(206,182,140,.28);border-radius:14px}
+.empty b{font-size:14px;color:rgba(226,205,163,.72);letter-spacing:.08em}
+.cap{position:absolute;left:22px;right:22px;top:452px;text-align:center;font-family:EJ,serif;
+ font-size:18px;line-height:1.62;color:var(--paper);white-space:pre-line;z-index:3;
+ transition:opacity 300ms ease}
+.phone.game .cap{top:312px;font-size:16px}
+/* #4 제목이 화면 한복판에 떠 있었다 → **개구부 안**에 든다.
+   §0 「제목 슬라이드＝글이 개구부 안(그림 없음)」 그대로. 〔08-09 사용자〕 */
+/* ⚠️ 합의된 목업은 `align-items:baseline`이라 글자가 개구부 **위쪽에 붙어** 있었다
+   (글자 중심 23px / 가운데 108px). 08-09에 **가운데로 내린다** 〔사용자〕.
+   ⛔배경을 깔지 않는다 — 뒤의 램프·먼지가 비쳐야 「빛나는 슬라이드」가 된다. */
+.titleslide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+ gap:11px;color:var(--paper);font-family:EJ,serif;font-size:24px;letter-spacing:.08em}
+.titleslide .no{font-size:14px;letter-spacing:.16em;opacity:.45}
+
+/* ── 게임 (코드 입력) ───────────────────────────────── */
+.gamebox{position:absolute;left:0;right:0;top:340px;bottom:0;z-index:5;display:none;
+ flex-direction:column;align-items:center;padding:0 24px}
+.phone.game .gamebox{display:flex}
+.ask{font-family:NG;font-size:13px;line-height:1.7;color:var(--paper);text-align:center;
+ white-space:pre-line;margin-bottom:14px}
+.disp{font-family:EJ,serif;font-size:30px;letter-spacing:.42em;text-indent:.42em;color:var(--paper);
+ border-bottom:1px solid rgba(252,236,211,.45);min-width:150px;text-align:center;padding:2px 0 8px;
+ margin-bottom:8px;min-height:44px}
+.msg{font-family:NG;font-size:11px;color:#c9a86a;height:16px;margin-bottom:10px}
+.pad{display:grid;grid-template-columns:repeat(3,64px);gap:8px}
+.key{font-family:EJ,serif;font-size:19px;color:var(--paper);background:transparent;
+ border:2px solid rgba(252,236,211,.38);border-radius:2px;padding:11px 0;cursor:pointer}
+.key:active{transform:scale(.97)}
+.key.fn{font-family:NG;font-size:12px}
+
+/* ── 인물 카드 ──────────────────────────────────────── */
+/* ⭐ 카드는 «천 위»에 뜬다 — 암흑을 깔지 않는다 〔08-12 사용자〕 */
+.card{position:absolute;inset:0;background:transparent;z-index:9;display:none;
+ flex-direction:column;align-items:center;justify-content:center;padding:30px 16px}
+.card.on{display:flex}
+.card img{width:150px;height:200px;object-fit:contain;border-radius:2px}
+.card .nm{font-family:EJ,serif;font-size:22px;color:var(--paper);margin-top:16px;letter-spacing:.04em}
+.card .job{font-family:NG;font-size:11px;color:rgba(252,236,211,.62);margin-top:6px}
+.card .cap2{font-family:EJ,serif;font-size:12.5px;line-height:1.85;color:rgba(252,236,211,.88);
+ margin-top:15px;text-align:center;white-space:pre-line}
+/* 확인 = 시작 버튼과 같은 꼴 〔08-12 사용자〕 */
+.card .ok{margin-top:24px;font-family:EJ,serif;font-size:22px;letter-spacing:.42em;
+ text-indent:.42em;color:var(--paper);background:transparent;
+ border:2px solid rgba(252,236,211,.5);border-radius:2px;padding:13px 30px 12px;cursor:pointer}
+.card .ok:active{transform:scale(.97)}
+
+/* ── 판 (인물사전 · 관계도) ───────────────────────────
+   ⭐⭐ 합의된 목업 두 벌에서 값을 그대로 옮겼다 —
+      `_build_screen2-1_grid.py`(인물 격자 v3) · `_build_screen2-1_circle.py`(관계 원형 v8).
+      ⛔ 내가 다시 짜지 않는다. 어긋나면 저 스크립트가 맞다. 〔08-09 사용자 지적〕 */
+.board{position:absolute;inset:0;background:var(--ink);z-index:8;display:none}
+.board.on{display:block}
+
+.bhint{position:absolute;left:0;right:0;top:var(--head);height:28px;line-height:28px;
+ text-align:center;z-index:9;background:var(--ink);font-family:NG;font-size:11.5px;
+ color:rgba(252,236,211,.5);letter-spacing:.01em;padding:0 12px}
+.btitle{position:absolute;left:18px;top:26px;z-index:10;font-family:EJ,serif;font-size:17px;
+ color:var(--paper);letter-spacing:.06em}
+.bclose{position:absolute;right:16px;top:24px;z-index:10;font-family:NG;font-size:11px;
+ color:rgba(252,236,211,.66);background:none;border:2px solid rgba(252,236,211,.30);
+ border-radius:4px;padding:7px 13px;cursor:pointer;letter-spacing:.08em;font-weight:700}
+.bclose:active{transform:scale(.97)}
+/* 판은 화면보다 크다 — 밀어서 본다. ⛔스크롤바는 감춘다(합의본 그대로) */
+.vp{position:absolute;top:104px;left:0;right:0;bottom:0;overflow:auto;
+ -webkit-overflow-scrolling:touch;scrollbar-width:none}
+.vp::-webkit-scrollbar{display:none}
+/* 가장자리 페이드 — **네 방향** */
+.fade{position:absolute;top:104px;left:0;right:0;bottom:0;pointer-events:none;z-index:3}
+.fade i{position:absolute;display:block}
+.fade .t{top:0;left:0;right:0;height:44px;background:linear-gradient(rgba(13,11,7,.95),rgba(13,11,7,0))}
+.fade .b{bottom:0;left:0;right:0;height:56px;background:linear-gradient(rgba(13,11,7,0),rgba(13,11,7,.95))}
+.fade .l{top:0;bottom:0;left:0;width:30px;background:linear-gradient(90deg,rgba(13,11,7,.9),rgba(13,11,7,0))}
+.fade .r{top:0;bottom:0;right:0;width:30px;background:linear-gradient(270deg,rgba(13,11,7,.9),rgba(13,11,7,0))}
+
+/* ── 인물 격자 (v3) ─────────────────────────────── */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;padding:14px 16px 40px}
+.cell{cursor:pointer;background:none;border:0;padding:0}
+.cell[disabled]{cursor:default}
+.inner{position:relative;width:100%;aspect-ratio:3/4;border:1px solid var(--line);
+ border-radius:3px;overflow:hidden;background:#000}
+.inner img{width:100%;height:100%;object-fit:cover;display:block}
+.faint img{filter:blur(var(--blur)) contrast(.62) brightness(.72);opacity:.5}
+.faint .inner{border-color:rgba(252,236,211,.10)}
+.got .inner{box-shadow:0 0 0 1px rgba(252,236,211,.38)}
+.gnm{height:20px;line-height:20px;text-align:center;font-size:11px;font-family:NG;
+ color:rgba(252,236,211,.9)}
+
+/* 집어 올린 카드 — 두 박자: ①떠올라 가운데로 ②뒤집힌다 */
+.veil{position:absolute;inset:0;background:rgba(13,11,7,.88);opacity:0;pointer-events:none;
+ transition:opacity .3s ease;z-index:11}
+.veil.on{opacity:1;pointer-events:auto}
+/* ⚠️ 합의본에서는 `.stage`인데 **화면 1의 `.stage`와 이름이 부딪쳐** 개명했다.
+   같은 이름을 두면 여기 `pointer-events:none`이 시작 버튼을 죽인다(08-09에 실제로 났다). */
+.pickcard{position:absolute;left:50%;top:50%;width:250px;height:333px;margin:-166px 0 0 -125px;
+ opacity:0;pointer-events:none;z-index:12;transform-style:preserve-3d;
+ transition:opacity .28s ease, transform .5s cubic-bezier(.3,0,.2,1)}
+.pickcard.up{opacity:1;pointer-events:auto}
+.pickcard.flip{transform:rotateY(180deg)}
+.sface{position:absolute;inset:0;backface-visibility:hidden;border-radius:3px;overflow:hidden;
+ background:var(--ink);box-shadow:0 0 0 1px rgba(252,236,211,.38)}
+.sface img{width:100%;height:100%;object-fit:cover;display:block}
+.sback{transform:rotateY(180deg);padding:22px 18px;display:flex;flex-direction:column;
+ align-items:center;justify-content:center;text-align:center}
+.sback .nm2{font-family:EJ,serif;font-size:19px;color:var(--paper);letter-spacing:.04em}
+.sback .job2{font-family:NG;font-size:10.5px;color:rgba(252,236,211,.55);margin-top:7px}
+.sback .cap3{font-family:EJ,serif;font-size:12.5px;line-height:1.85;color:rgba(252,236,211,.88);
+ margin-top:14px;white-space:pre-line}
+
+/* ── 관계 원형 (v8) ──────────────────────────────── */
+.plate{position:relative;width:520px;height:850px}
+svg.wires{position:absolute;inset:0;width:520px;height:850px}
+.arw{fill:none;stroke:rgba(252,236,211,.62);stroke-width:1.2;
+ transition:stroke .2s,stroke-width .2s,opacity .2s}
+.arw.dim{opacity:.13}
+.arw.todo{stroke:rgba(252,236,211,.26);stroke-dasharray:3 5}
+.arw.live{stroke:rgba(252,236,211,.9);animation:shine 1.7s ease-in-out infinite}
+@keyframes shine{0%,100%{stroke:rgba(252,236,211,.55);stroke-width:1.5}
+ 50%{stroke:rgba(252,236,211,1);stroke-width:2.5}}
+.arw.live.sel{animation:none}
+.ahead{fill:rgba(252,236,211,.62);transition:opacity .2s}
+.ahead.dim{opacity:.13}
+.hit{fill:none;stroke:transparent;stroke-width:26;cursor:pointer}
+.hit.off{pointer-events:none}
+.face{position:absolute;transform:translate(-50%,-50%);width:96px;cursor:pointer;
+ transition:opacity .2s}
+.face .win{width:96px;height:128px;overflow:hidden;background:#000;transition:box-shadow .2s}
+.face .win img{width:100%;height:100%;object-fit:cover;display:block}
+.face .nm{height:24px;line-height:24px;text-align:center;font-size:12px;letter-spacing:.02em;
+ color:rgba(252,236,211,.92);font-family:NG}
+.face.dim{opacity:.3}
+.face.on .win{box-shadow:0 0 0 1px rgba(252,236,211,.6)}
+.face.faint{cursor:default}
+.face.faint .win img{filter:blur(var(--blur)) contrast(.62) brightness(.72);opacity:.5}
+/* 「그 밖의 관계」 틀 — 相関図 관습: 도형으로 둘러싸고 라벨을 위에 */
+.grp{position:absolute;left:65px;top:650px;width:390px;height:180px;
+ border:1px solid rgba(252,236,211,.16);border-radius:5px;background:rgba(252,236,211,.028)}
+.grp .tag{position:absolute;top:-9px;left:14px;background:var(--ink);padding:0 8px;
+ font-size:11px;letter-spacing:.06em;color:rgba(252,236,211,.5);font-family:NG}
+.grp .face{transform:none;top:14px}
+.grp .face.l{left:16px} .grp .face.r{right:16px}
+/* ⛔화살표 위 글자(견본 라벨 「물의 요정」)는 폐기했다 〔08-12 사용자〕 — 되살리지 말 것 */
+.grp svg{position:absolute;left:120px;top:62px;width:150px;height:44px}
+/* 구절 박스 — 화면 한가운데 붙박이 */
+.quote{position:absolute;left:20px;right:20px;top:50%;transform:translateY(-50%);
+ background:#120d08;border:1px solid var(--line);border-radius:4px;padding:18px 18px 16px;
+ z-index:13;display:none}
+.quote.on{display:block}
+.quote .who{font-family:NG;font-size:10px;color:rgba(252,236,211,.62);letter-spacing:.06em;
+ margin-bottom:9px}
+.quote .txt{font-family:EJ,serif;font-size:15px;line-height:1.72;color:var(--paper);
+ white-space:pre-line}
+.quote .x{position:absolute;right:8px;top:6px;font-family:NG;font-size:15px;color:#9c9080;
+ background:transparent;border:0;cursor:pointer;padding:4px 8px}
+
+@media (prefers-reduced-motion:reduce){.glow,.dust,.weave{animation:none}}
