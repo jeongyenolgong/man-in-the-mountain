@@ -167,36 +167,46 @@ async function titleLoop(mine){
 }
 (document.fonts?document.fonts.ready:Promise.resolve()).then(()=>{ measure(); titleLoop(gen); });
 
-/* 진행표 — 자막 순서 그대로. 4장 끝(쇤펠트 찾기)과 7장 끝(베렌스 찾기)에 게임이 낀다 */
+/* 진행표 — 자막 순서 그대로. 4장 끝(쇤펠트 찾기)에 게임이 낀다 */
 const intro = D.자막.filter(s=>s.화면==='2 도입부');
-const ch3   = D.자막.filter(s=>s.화면==='3 원장');
-const ch4   = D.자막.filter(s=>s.화면==='4 원장의 시선');
 const steps=[];
 let last=null;
 intro.forEach(s=>{ if(s.장!==last){steps.push({t:'title',장:s.장,제목:s.제목});last=s.장;}
                    steps.push({t:'sub',s}); });
-steps.push({t:'game',who:'쇤펠트 부인', kind:'이름', bg:'D-홀'});
+steps.push({t:'game',who:'쇤펠트 부인', kind:'이름', bg:'D-홀', ask:'화면 2|게임 지시문'});
 steps.push({t:'plate'});                                   // 작업판을 펼친다
 
-/* ⭐⭐⭐ 08-12 — **미션마다 슬라이드가 앞선다**(설계 §14). 베렌스 한 사람의 차례가
-   **이름 → 외형 → 성격 → 관계**이고, 나머지 여섯 인물도 이 틀을 그대로 쓴다.
+/* ⭐⭐⭐ 08-12 — **미션마다 슬라이드가 앞선다**(설계 §14). 한 인물의 차례가
+   **이름 → 외형 → 성격 → 관계**이고, 일곱 인물이 이 틀을 그대로 쓴다.
    ⛔ 종전에는 7장 자막 다섯 줄을 «다 보고» 이름 미션이 왔다 — 이름을 맞히기 «전»에
-      얼굴·성격 이야기가 먼저 나오는 셈이라 차례를 바꿨다 〔08-12 사용자 승인〕. */
-const BEHRENS='호프라트 베렌스';
-const mission=(t)=>D.벽문장.filter(w=>w.화자===D.짧은이름[BEHRENS] && w.종류===t);
-steps.push({t:'title',장:'7',제목:'원장'});
-ch3.slice(0,2).forEach(s=>steps.push({t:'sub',s}));            /* 접수 · 복도 */
-steps.push({t:'game',who:BEHRENS, kind:'이름', bg:'F-복도'});
-ch3.slice(2).forEach(s=>steps.push({t:'sub',s}));              /* 다가옴 · 농담 · 가림 */
+      얼굴·성격 이야기가 먼저 나오는 셈이라 차례를 바꿨다 〔08-12 사용자 승인〕.
+   ⭐⭐⭐ 260813 — 인물이 베렌스로 박혀 있던 것을 풀었다. **아래 표에 한 줄을 더하면
+      다음 인물이 붙고**, 문안·코드·힌트·요약은 엑셀이 채운다.
+      `앞` = 이름 미션 «앞»에 오는 자막 수(그를 찾아 나서는 대목). */
+const CAST=[
+  {who:'호프라트 베렌스', 장:['3 원장','4 원장의 시선'],   이름bg:'F-복도', 앞:2, 지시문:'화면 3|게임 지시문'},
+  {who:'요아힘 침센',     장:['5 청년','6 요아힘의 마음'], 이름bg:'J-어디', 앞:2, 지시문:'화면 5|게임 지시문'},
+];
 /* ⭐ 미션 화면의 그림 = **그 앞 마지막 슬라이드** 〔08-12〕. 아래에 자막 꼴로 힌트 한 줄. */
 const lastOf=a=>a.length?a[a.length-1].슬롯:'';
-mission('외형').forEach(w=>steps.push({t:'game',who:BEHRENS,kind:'외형',w,bg:lastOf(ch3)}));
-mission('성격').forEach(w=>steps.push({t:'game',who:BEHRENS,kind:'성격',w,bg:lastOf(ch3)}));
-if(ch4.length){
-  steps.push({t:'title',장:ch4[0].장,제목:ch4[0].제목});
-  ch4.forEach(s=>steps.push({t:'sub',s}));
-  mission('관계').forEach(w=>steps.push({t:'game',who:BEHRENS,kind:'관계',w,bg:lastOf(ch4)}));
-}
+CAST.forEach(p=>{
+  const nm=D.짧은이름[p.who];
+  const 벽=(t)=>D.벽문장.filter(w=>w.화자===nm && w.종류===t);
+  const A=D.자막.filter(s=>s.화면===p.장[0]);      /* 이름·외형·성격 */
+  const B=D.자막.filter(s=>s.화면===p.장[1]);      /* 관계 */
+  if(!A.length) return;
+  steps.push({t:'title',장:A[0].장,제목:A[0].제목});
+  A.slice(0,p.앞).forEach(s=>steps.push({t:'sub',s}));
+  steps.push({t:'game',who:p.who, kind:'이름', bg:p.이름bg, ask:p.지시문});
+  A.slice(p.앞).forEach(s=>steps.push({t:'sub',s}));
+  벽('외형').forEach(w=>steps.push({t:'game',who:p.who,kind:'외형',w,bg:lastOf(A)}));
+  벽('성격').forEach(w=>steps.push({t:'game',who:p.who,kind:'성격',w,bg:lastOf(A)}));
+  if(B.length){
+    steps.push({t:'title',장:B[0].장,제목:B[0].제목});
+    B.forEach(s=>steps.push({t:'sub',s}));
+    벽('관계').forEach(w=>steps.push({t:'game',who:p.who,kind:'관계',w,bg:lastOf(B)}));
+  }
+});
 steps.push({t:'end'});
 
 /* 게임 ①은 4장 마지막 자막 뒤에 와야 한다 — 자리를 옮긴다 */
@@ -223,7 +233,7 @@ function frame(name){
 /* 미션 지시문. ⭐문장은 엑셀(화면문구 시트) 그대로고, 여기서는 이름과 조사만 끼운다.
    화면 4의 셋은 `{인물}{은/는} …` 꼴로 적혀 있다 〔08-12 사용자 확정〕. */
 function ask(st){
-  if(!st.w) return D.문구[st.who==='쇤펠트 부인' ? '화면 2|게임 지시문' : '화면 3|게임 지시문'];
+  if(!st.w) return D.문구[st.ask];                            /* 이름 미션 — 인물마다 다르다 */
   const nm=D.짧은이름[st.who], c=nm.charCodeAt(nm.length-1)-0xAC00;
   const 은는 = (c>=0 && c<11172 && c%28) ? '은' : '는';       /* 받침이 있으면 「은」 */
   return D.문구[`화면 4|${st.kind} 지시문`].replace('{인물}',nm).replace('{은/는}',은는);
@@ -275,7 +285,7 @@ function show(){
   }
   else if(st.t==='end'){
     ap.style.display=halo.style.display='block';
-    paint('<div class="titleslide"><span style="font-size:17px">여기까지 — 다음은 두 번째 인물</span></div>', push);
+    paint('<div class="titleslide"><span style="font-size:17px">여기까지 — 다음 인물은 아직 없다</span></div>', push);
   }
   shown = ap.style.display==='block';
 }
